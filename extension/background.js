@@ -1,14 +1,25 @@
 const FILTER_LIST_URL = "https://easylist.to/easylist/easylist.txt";
 const STATS_KEY = "shield_stats";
+const COSMETIC_KEY = "shield_cosmetic";
 
-// Rule ID tracking
 let ruleIdCounter = 1;
 
 async function fetchFilters() {
   try {
     const resp = await fetch(FILTER_LIST_URL);
     const text = await resp.text();
-    return parseFilters(text);
+    const result = parseFilters(text);
+    // Save cosmetic filters
+    const cosmeticAll = [];
+    for (const line of text.split("\n")) {
+      const t = line.trim();
+      if (t.includes("##")) {
+        const p = t.split("##");
+        if (p.length === 2 && p[1].trim().length > 3) cosmeticAll.push(p[1].trim());
+      }
+    }
+    await chrome.storage.local.set({ [COSMETIC_KEY]: cosmeticAll.slice(0, 10000) });
+    return result;
   } catch (e) {
     console.error("[shield] Failed to fetch filters:", e);
     return [];
@@ -17,11 +28,26 @@ async function fetchFilters() {
 
 function parseFilters(text) {
   const rules = [];
+  const cosmeticSelectors = [];
   const lines = text.split("\n");
 
   for (const line of lines) {
     const trimmed = line.trim();
     if (!trimmed || trimmed.startsWith("!") || trimmed.startsWith("[")) continue;
+
+    // Extract cosmetic filters: ##selector
+    // Also handle domain-specific: domain.com##selector
+    if (trimmed.includes("##")) {
+      const parts = trimmed.split("##");
+      if (parts.length === 2 && parts[1].trim()) {
+        // Remove domain restriction for simplicity (apply everywhere)
+        const selector = parts[1].trim().replace(/:has\(/g, ":has(").replace(/:has-text\(/g, "[x-has-text=");
+        if (selector.length > 3) {
+          cosmeticSelectors.push(selector);
+        }
+      }
+      continue;
+    }
 
     // Convert ABP-style filter to regex pattern for DNR
     // We focus on the most common patterns: domain blocking and URL filters
@@ -109,6 +135,8 @@ async function updateRules() {
   // Update stats
   const stats = await getStats();
   stats.rulesCount = limited.length;
+  const cos = await chrome.storage.local.get([COSMETIC_KEY]);
+  stats.cosmeticCount = (cos[COSMETIC_KEY] || []).length;
   await saveStats(stats);
 }
 

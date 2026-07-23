@@ -2,6 +2,7 @@ const toggleBtn = document.getElementById("toggleBtn");
 const statusLabel = document.getElementById("statusLabel");
 const blockedCount = document.getElementById("blockedCount");
 const rulesCount = document.getElementById("rulesCount");
+const cosmeticCount = document.getElementById("cosmeticCount");
 const allowInput = document.getElementById("allowInput");
 const allowlistContainer = document.getElementById("allowlistContainer");
 
@@ -25,6 +26,7 @@ function refreshStats() {
   chrome.runtime.sendMessage({ type: "getStats" }, (stats) => {
     blockedCount.textContent = stats.blocked || 0;
     rulesCount.textContent = stats.rulesCount || 0;
+    cosmeticCount.textContent = stats.cosmeticCount || 0;
   });
   chrome.runtime.sendMessage({ type: "getAllowlist" }, (list) => {
     renderAllowlist(list);
