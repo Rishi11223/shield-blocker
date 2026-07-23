@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "Shield Blocker",
+  "version": "1.0.0",
+  "description": "Fast ad blocker using filter lists. Blocks ads, trackers, and popups across all websites.",
+  "permissions": [
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "storage"
+  ],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Shield Blocker"
+  },
+  "icons": {
+    "16": "icon_16.png",
+    "48": "icon.png",
+    "128": "icon_128.png"
+  }
+}
